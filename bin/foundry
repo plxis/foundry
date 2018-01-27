@@ -1,0 +1,80 @@
+#!/bin/bash
+# -----------------------------------------------------------------------------
+# This script executes the Terraform configuration against the target account
+# to bootstrap it. It is intended to run from a workstation with the required
+# AWS credentials to both store the remote state in S3, and also execute the 
+# resources creation.
+# -----------------------------------------------------------------------------
+set -e
+trap cleanup EXIT
+
+SCRIPT_DIR=`dirname $(readlink -f $0)`
+PROJECT_DIR=`dirname $(readlink -f $SCRIPT_DIR)`
+TERRAFORM_DIR="${PROJECT_DIR}/terraform/site"
+WORK_DIR=${PWD}
+FOUNDRY_BACKEND_CONFIG=${FOUNDRY_BACKEND_CONFIG:-"${WORK_DIR}/backend-config.tfvars"}
+FOUNDRY_VAR_FILE=${FOUNDRY_VAR_FILE:-"${WORK_DIR}/foundry.tfvars"}
+
+FORCE=0
+ACTION="apply"
+
+function cleanup() {
+  rm ${PLAN_FILE} 2>/dev/null
+}
+
+function usage() {
+  echo "Bootstraps a cloud environment with basic infrastructure needed in later resource provisioning."
+  echo "Usage: $0 [--destroy] [--force]"
+  echo "  --destroy     destroy the bootstrapped infrastructure"
+  echo "  --force       suppress all prompts, always assuming yes"
+  exit 1
+}
+
+while [[ $# -gt 0 ]]; do
+  if [[ $1 == "-h" || $1 == "--help" ]]; then
+    usage
+  elif [[ $1 == "--destroy" ]]; then
+    ACTION="destroy"
+  elif [[ $1 == "--force" ]]; then
+    FORCE=1
+  else
+    usage
+  fi
+  shift
+done
+
+cd ${TERRAFORM_DIR}
+
+terraform init --backend=true -backend-config=${FOUNDRY_BACKEND_CONFIG}
+
+if [[ "${ACTION}" == "apply" ]]; then
+  PLAN_FILE="${WORK_DIR}/site.tfplan"
+  terraform plan -out ${PLAN_FILE} -var-file ${FOUNDRY_VAR_FILE}
+
+  if [[ "${FORCE}" == "0" ]]; then
+    echo -n "[ATTENTION] Review the plan output above. Do you wish to apply the plan? [y/N]: "
+    read PROMPT
+  else
+    PROMPT="y"
+  fi
+
+  if [[ "${PROMPT}" == "y" ]]; then
+    terraform apply ${PLAN_FILE}
+    rm ${PLAN_FILE}
+  fi
+fi
+
+if [[ "${ACTION}" == "destroy" ]]; then
+  if [[ "${FORCE}" == "0" ]]; then
+    echo -n "[WARN] This will destroy all resources. Continue? [y/N]: "
+    read PROMPT
+  else
+    PROMPT="y"
+  fi
+
+  if [[ "${PROMPT}" == "y" ]]; then
+    terraform destroy --force -var-file ${FOUNDRY_VAR_FILE}
+  fi
+fi
+
+exit 0

@@ -1,0 +1,54 @@
+# The AWS profile to use, as specified in ~/.aws/credentials
+profile             = "PROFILE"
+
+# The AWS region where the resources will reside
+region              = "us-east-1"
+
+# A logical name to group related resources, should reference environment. Ex: foundry-lab
+context             = "CONTEXT"
+
+# The base CIDR block for the VPC. The subnet blocks will
+# be based off this value.
+cidr_base           = "172.4"
+
+# The primary Route53 zone name for the site
+public_dns_zone     = "DOMAIN"
+
+# The private (AWS-internal) name for the site
+private_dns_zone     = "site.local"
+
+# A map of regions and available availability_zones for
+# the VPC and subnets. NOTE: Only one region is currently
+# supported.
+availability_zones  = {
+  "us-east-1" = { 
+    "a" = "us-east-1c"
+    "b" = "us-east-1d"
+  }
+}
+
+# A map of IAM user names and the type(s) of access (Viewers and/or Admins, comma-separated) that they should have
+users = {
+  "USER1" = "Viewers"
+  "USER2" = "Admins,Viewers"
+}
+
+# Global list of trusted IPs for the organization
+ip_whitelist = []
+
+# Email address of a G-Suite admin user that has the necessary 
+# rights for connecting IAM users to G-Suite users.
+# Use "NONE" if G-Suite integration is not needed
+gsuite_admin_email  = "GSUITE_ADMIN_EMAIL"
+
+# The G-Suite service account credential key in JSON format, base64 encoded.
+# Use "NONE" if G-Suite integration is not needed
+gsuite_secret       = "GSUITE_SECRET"
+
+# Use "true" (in quotes) to enable SES support for the domain (and generate necessary domain verification records)
+# Do not enable this if the Route53 zone associated with this configuration is not connected to a
+# the public DNS
+ses_enabled = "false"
+
+# Directory in which temporary files will be placed (ie: /tmp)
+work_dir            = "WORK_DIR"

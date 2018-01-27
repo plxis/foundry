@@ -1,0 +1,11 @@
+# The AWS region where the remote state bucket resides
+region = "us-east-1"
+
+# The AWS bucket where the remote state file will be persisted
+bucket = "BUCKET"
+
+# The prefix/key for the remote state file
+key    = "SOME/PATH/TO/FILE"
+
+# The AWS profile to use, as specified in ~/.aws/credentials
+profile= "PROFILE"
